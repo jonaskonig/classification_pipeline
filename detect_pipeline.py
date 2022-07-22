@@ -6,7 +6,7 @@ import re
 
 class DetectPipeline:
 
-    def __init__(self, split_pattern="(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?)\s"):
+    def __init__(self, split_pattern="(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?)\s", topic_emotion_threshold=0.1, max_label_count=4):
         self.CONNNECTSTRING = "***REMOVED***"
         self.topicbert = pipeline("text-classification", model="jonaskoenig/topic_classification_04",
                                   tokenizer="jonaskoenig/topic_classification_04")
@@ -24,21 +24,24 @@ class DetectPipeline:
         self.future = self.myclient["ftr"]
         self.ftr_s = self.future["Future_time_references"]
         self.ftr_q = self.future["Future_time_references_questions"]
-        rereplace = [r"\n", r"\r", r"RT", r"(https?.\S+)", r"\<(.*?)\>",'[^\x00-\x7F]']
+        rereplace = [r"\n", r"\r", r"RT", r"(https?.\S+)", r"\<(.*?)\>", '[^\x00-\x7F]']
         self.regex = re.compile('|'.join(rereplace))
         self.split_pattern = split_pattern
+        self.topic_emotion_thresh = topic_emotion_threshold
+        self.max_label_count = max_label_count
 
     def classifysentence(self, sentence: str):
         svs = self.statementvssentence(sentence)
         fut = self.futurebert(sentence)
         if fut[0]["label"] == "LABEL_1":
-            em = self.emotionbert(sentence, top_k=2)
-            top = self.topicbert(sentence, top_k=2)
+            em = self.emotionbert(sentence, top_k=self.max_label_count)
+            top = self.topicbert(sentence, top_k=self.max_label_count)
+            top = [x["label"] for x in top if top[0]["score"] - x["score"] < self.topic_emotion_thresh]
+            em = [x["label"] for x in em if em[0]["score"] - x["score"] < self.topic_emotion_thresh]
             output = {"text": sentence,
-                      "emotion": [em[0]["label"], em[1]["label"]] if em[0]["score"] - em[0]["score"] < 0.1 else [
-                          em[0]["label"]],
-                      "topic": [top[0]["label"], top[1]["label"]] if top[0]["score"] - top[0]["score"] < 0.1 else [
-                          top[0]["label"]]}
+                      "emotion": em,
+                      "topic": top}
+            print(output)
             if svs[0]["label"] == "LABEL_0":
                 return 0, output
             return 1, output
@@ -48,8 +51,8 @@ class DetectPipeline:
         return langid.classify(text)[0] == lang
 
     def split(self, text) -> list:
-        text = re.sub(self.regex,"", text)
-        text = re.sub(r"\s+", ' ',text)
+        text = re.sub(self.regex, "", text)
+        text = re.sub(r"\s+", ' ', text)
         return re.split(self.split_pattern, text)
 
     def findwhitespac(sef, text) -> int:
