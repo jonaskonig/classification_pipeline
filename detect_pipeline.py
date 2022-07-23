@@ -41,7 +41,6 @@ class DetectPipeline:
             output = {"text": sentence,
                       "emotion": em,
                       "topic": top}
-            print(output)
             if svs[0]["label"] == "LABEL_0":
                 return 0, output
             return 1, output
@@ -64,7 +63,7 @@ class DetectPipeline:
         if len(questionlist) > 1:
             self.ftr_q.insert_many(questionlist)
 
-    def datata_classify(self, data):
+    def datata_classify(self, data, meta: dict):
         if self.detect_lang(data):
             sentences = self.split(data)
             cleansentences = [x for x in sentences if 4 < self.findwhitespac(x) < 35]
@@ -76,4 +75,6 @@ class DetectPipeline:
                     statementlist.append(out)
                 if q == 1:
                     questlist.append(out)
+            questlist = [x | meta for x in questlist]
+            statementlist = [x | meta for x in statementlist]
             self.to_database(questlist, statementlist)
