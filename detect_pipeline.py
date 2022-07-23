@@ -2,11 +2,13 @@ from transformers import pipeline
 import pymongo
 import langid
 import re
-
+import sys
 
 class DetectPipeline:
 
     def __init__(self, split_pattern="(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?)\s", topic_emotion_threshold=0.1, max_label_count=4):
+        if sys.version_info[1] < 9 and sys.version_info[0] < 3:
+            raise Exception("Must be using Python 3.9 or higher")
         self.CONNNECTSTRING = "***REMOVED***"
         self.topicbert = pipeline("text-classification", model="jonaskoenig/topic_classification_04",
                                   tokenizer="jonaskoenig/topic_classification_04")
