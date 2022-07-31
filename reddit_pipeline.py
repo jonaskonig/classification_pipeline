@@ -23,7 +23,7 @@ class RedditPipeline:
         for file_path in file_paths:
             line_count = self.get_line_count(file_path)
             file = open(file_path, 'r')
-            logging.info('File:\n' + str(file_path) + '\nLines: ' + str(line_count))
+            logging.info('\n\nProcessing new File:\n' + str(file_path) + '\nLines: ' + str(line_count) + '\n')
             reddit_post = json.loads(next(file))
             index = 0
             while reddit_post != None:
@@ -31,7 +31,7 @@ class RedditPipeline:
                 meta = self.extract_meta(reddit_post)
                 self.detect_pipeline.datata_classify(data, meta)
                 reddit_post = json.loads(next(file))
-                if index % 100 == 0:
+                if index % 10000 == 0:
                     logging.info('Processed ' + str(index / line_count) + '% ' + ' (' + str(index) + '/' + str(line_count) + ')')
                 index += 1
             self.save_pipeline_progress(file_path)
