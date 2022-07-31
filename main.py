@@ -1,7 +1,7 @@
 from detect_pipeline import DetectPipeline
 import datetime
 
-str = "I like chicken and i like you. RT I will probably go to tom later this day http://ghjhjk."
+str = "Most cerntenly we will go to mars un the next century. RT I will probably go to tom later this day http://ghjhjk. Or will I go to Hans?"
 meta = {"meta":{"source": "reddit", "time": datetime.datetime.now()}}
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':

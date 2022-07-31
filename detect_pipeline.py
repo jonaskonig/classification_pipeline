@@ -4,9 +4,11 @@ import langid
 import re
 import sys
 
+
 class DetectPipeline:
 
-    def __init__(self, split_pattern="(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?)\s", topic_emotion_threshold=0.1, max_label_count=4):
+    def __init__(self, split_pattern="(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?)\s", topic_emotion_threshold=0.1,
+                 max_label_count=4, min_topic_certainty=0.5, min_emotion_certainty=0.2, stat_file="stats.txt"):
         if sys.version_info[1] < 9 and sys.version_info[0] < 3:
             raise Exception("Must be using Python 3.9 or higher")
         self.CONNNECTSTRING = "***REMOVED***"
@@ -31,6 +33,9 @@ class DetectPipeline:
         self.split_pattern = split_pattern
         self.topic_emotion_thresh = topic_emotion_threshold
         self.max_label_count = max_label_count
+        self.min_topic_certainty = min_topic_certainty
+        self.min_emotion_certainty = min_emotion_certainty
+        self.stat_file = stat_file
 
     def classifysentence(self, sentence: str):
         svs = self.statementvssentence(sentence)
@@ -38,11 +43,18 @@ class DetectPipeline:
         if fut[0]["label"] == "LABEL_1":
             em = self.emotionbert(sentence, top_k=self.max_label_count)
             top = self.topicbert(sentence, top_k=self.max_label_count)
-            top = [x["label"] for x in top if top[0]["score"] - x["score"] < self.topic_emotion_thresh]
-            em = [x["label"] for x in em if em[0]["score"] - x["score"] < self.topic_emotion_thresh]
+            if top[0]["score"] < self.min_topic_certainty or em[0]["score"] < self.min_emotion_certainty:
+                return 2, None
+            topl = [x["label"] for x in top if top[0]["score"] - x["score"] < self.topic_emotion_thresh]
+            eml = [x["label"] for x in em if em[0]["score"] - x["score"] < self.topic_emotion_thresh]
+            em = [x["score"] for x in em]
+            top = [x["score"] for x in top]
             output = {"text": sentence,
-                      "emotion": em,
-                      "topic": top}
+                      "emotion": eml,
+                      "topic": topl,
+                      "emotion_certainty": em[:len(eml)],
+                      "topic_certainty": top[:len(topl)]
+                      }
             if svs[0]["label"] == "LABEL_0":
                 return 0, output
             return 1, output
@@ -52,9 +64,10 @@ class DetectPipeline:
         return langid.classify(text)[0] == lang
 
     def split(self, text) -> list:
-        text = re.sub(self.regex, "", text)
-        text = re.sub(r"\s+", ' ', text)
-        return re.split(self.split_pattern, text)
+        split = re.split(self.split_pattern, text)
+        split = [re.sub(self.regex, "", s) for s in split]
+        split = [ re.sub(r"\s+", ' ', s) for s in split]
+        return split
 
     def findwhitespac(sef, text) -> int:
         return len(re.findall(r'\w+', text))
@@ -62,7 +75,7 @@ class DetectPipeline:
     def to_database(self, questionlist, statementlist):
         if len(statementlist) > 0:
             self.ftr_s.insert_many(statementlist)
-        if len(questionlist) > 1:
+        if len(questionlist) > 0:
             self.ftr_q.insert_many(questionlist)
 
     def datata_classify(self, data, meta: dict):
@@ -80,3 +93,7 @@ class DetectPipeline:
             questlist = [x | meta for x in questlist]
             statementlist = [x | meta for x in statementlist]
             self.to_database(questlist, statementlist)
+            file1 = open(self.stat_file, "a")  # append mode
+            file1.write(f"{len(sentences)},{len(statementlist)},{len(questlist)}\n")
+            file1.close()
+
