@@ -1,10 +1,11 @@
 from detect_pipeline import DetectPipeline
-import datetime
+from helper import absoluteFilePaths
 
-str = "Most cerntenly we will go to mars un the next century. RT I will probably go to tom later this day http://ghjhjk. Or will I go to Hans?"
-meta = {"meta":{"source": "reddit", "time": datetime.datetime.now()}}
-# Press the green button in the gutter to run the script.
+from reddit_pipeline import RedditPipeline
+
 if __name__ == '__main__':
-    dp = DetectPipeline()
-    dp.datata_classify(str, meta)
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+    detect_pipeline = DetectPipeline()
+    reddit_pipeline = RedditPipeline(detect_pipeline)
+    directory = '/mnt/ceph/storage/data-tmp/teaching-current/jk76qufi/pushshift_reddit_dump'
+    file_paths = list(absoluteFilePaths(directory))
+    reddit_pipeline.run(file_paths)
