@@ -17,8 +17,13 @@ class RedditPipeline:
 
         current_progress = self.load_pipeline_progress()
         if current_progress != None:
-            file_paths = file_paths[file_paths.index(current_progress) + 1:]
-            logging.info('Reinitialized after progress: ' + str(current_progress))
+            last_file = current_progress['file_path']
+            file_paths = file_paths[file_paths.index(last_file) + 1:]
+            logging.info('Reinitialized after progress: ' + str(last_file))
+            start_index = current_progress['index']
+        else:
+            start_index = -1
+
 
         for file_path in file_paths:
             line_count = self.get_line_count(file_path)
@@ -27,14 +32,15 @@ class RedditPipeline:
             reddit_post = json.loads(next(file))
             index = 0
             while reddit_post != None:
-                data = reddit_post["body"]
-                meta = self.extract_meta(reddit_post)
-                self.detect_pipeline.datata_classify(data, meta)
-                reddit_post = json.loads(next(file))
-                if index % 10000 == 0:
-                    logging.info('Processed ' + str(index / line_count) + '% ' + ' (' + str(index) + '/' + str(line_count) + ')')
+                if index > start_index:
+                    data = reddit_post["body"]
+                    meta = self.extract_meta(reddit_post)
+                    self.detect_pipeline.datata_classify(data, meta)
+                    reddit_post = json.loads(next(file))
+                    if index % 10000 == 0:
+                        logging.info('Processed ' + str(index / line_count) + '% ' + ' (' + str(index) + '/' + str(line_count) + ')')
+                self.save_pipeline_progress(file_path, index)
                 index += 1
-            self.save_pipeline_progress(file_path)
         logging.info('Pipeline finished')
 
     def load_pipeline_progress(self):
@@ -45,9 +51,9 @@ class RedditPipeline:
         return None
 
     def save_pipeline_progress(self, file_path, index):
-        file = open('reddit_pipeline_progress.txt', 'w')
-        progress: dict = {file_path: file_path, index: index}
-        file.write(json.dumps(progress))
+        with open('reddit_pipeline_progress.txt', 'r+') as file:
+            progress: dict = {file_path: file_path, index: index}
+            file.write(json.dumps(progress))
 
     def extract_meta(self, reddit_post) -> dict:
         """TODO"""
