@@ -4,6 +4,7 @@ import json
 import logging
 
 from detect_pipeline import DetectPipeline
+from helper import get_line_count
 
 
 class RedditPipeline:
@@ -26,7 +27,7 @@ class RedditPipeline:
 
 
         for file_path in file_paths:
-            line_count = self.get_line_count(file_path)
+            line_count = get_line_count(file_path)
             file = open(file_path, 'r')
             logging.info('\n\nProcessing new File:\n' + str(file_path) + '\nLines: ' + str(line_count) + '\n')
             reddit_post = json.loads(next(file))
@@ -58,13 +59,5 @@ class RedditPipeline:
     def extract_meta(self, reddit_post) -> dict:
         """TODO"""
         return reddit_post
-
-    def get_line_count(self, file_path) -> int:
-        with open(file_path) as f:
-            line_count = 0
-            for line in f:
-                line_count += 1
-
-        return line_count
 
 
