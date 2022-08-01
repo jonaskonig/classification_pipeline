@@ -21,11 +21,11 @@ def count_all_lines():
         for file_path in file_paths:
             line_count = get_line_count(file_path)
             line_counts.append(line_count)
-            file.write(file_path + ':' + line_count)
+            file.write(file_path + ':' + str(line_count))
         with open('files_line_count_summary.txt', 'w') as file:
-            file.write('Number of files: ' + len(file_paths))
-            file.write('Min number of lines: ' + min(line_counts))
-            file.write('Max number of lines: ' + max(line_counts))
-            file.write('Mean number of lines: ' + mean(line_counts))
-            file.write('Median number of lines: ' + median(line_counts))
+            file.write('Number of files: ' + str(len(file_paths)))
+            file.write('Min number of lines: ' + str(min(line_counts)))
+            file.write('Max number of lines: ' + str(max(line_counts)))
+            file.write('Mean number of lines: ' + str(mean(line_counts)))
+            file.write('Median number of lines: ' + str(median(line_counts)))
     
