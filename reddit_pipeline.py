@@ -51,7 +51,7 @@ class RedditPipeline:
         return None
 
     def save_pipeline_progress(self, file_path, index):
-        with open('reddit_pipeline_progress.txt', 'r+') as file:
+        with open('reddit_pipeline_progress.txt', 'w') as file:
             progress: dict = {file_path: file_path, index: index}
             file.write(json.dumps(progress))
 

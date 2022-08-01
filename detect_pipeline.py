@@ -3,7 +3,9 @@ import pymongo
 import langid
 import re
 import sys
-
+import tensorflow as tf
+# add to the top of your code under import tensorflow as tf
+tf.config.experimental.enable_tensor_float_32_execution(False)
 
 class DetectPipeline:
 
