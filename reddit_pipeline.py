@@ -52,7 +52,7 @@ class RedditPipeline:
 
     def save_pipeline_progress(self, file_path, index):
         with open('reddit_pipeline_progress.txt', 'w') as file:
-            progress: dict = {file_path: file_path, index: index}
+            progress: dict = {'file_path': file_path, 'index': index}
             file.write(json.dumps(progress))
 
     def extract_meta(self, reddit_post) -> dict:
