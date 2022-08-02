@@ -115,8 +115,6 @@ class RedditPipeline:
         link_id = reddit_post['link_id'] if 'link_id' in reddit_post else None
         parent_id = reddit_post['parent_id'] if 'parent_id' in reddit_post else None
         subreddit = reddit_post['subreddit'] if 'subreddit' in reddit_post else None
-        if (timestamp == None or permalink == None or link_id == None or parent_id == None or subreddit == None):
-            logging.info(f'Meta data not complete for:\n{reddit_post}\n')
         return {
             'meta': {
                 'timestamp': timestamp,
