@@ -8,9 +8,11 @@ from helper import get_line_count
 
 
 class RedditPipeline:
-    def __init__(self, detect_pipeline: DetectPipeline):
+    def __init__(self, id: str, detect_pipeline: DetectPipeline):
+        self.id = id
         self.detect_pipeline = detect_pipeline
-        logging.basicConfig(filename='reddit_pipeline.log', filemode='a', format='%(asctime)s - %(message)s', level=logging.INFO)
+        self.progress_file = f'reddit_pipeline_progress_{self.id}.txt'
+        logging.basicConfig(filename=f'reddit_pipeline_{self.id}.log', filemode='a', format='%(asctime)s - %(message)s', level=logging.INFO)
 
     def run(self, file_paths: List[str]):
         logging.info('Pipeline to run on the following files:\n' + str(file_paths) + '\n\n')
@@ -45,14 +47,13 @@ class RedditPipeline:
         logging.info('Pipeline finished')
 
     def load_pipeline_progress(self):
-        path = 'reddit_pipeline_progress.txt'
-        if os.path.exists(path):
-            file = open(path, 'r')
+        if os.path.exists(self.progress_file):
+            file = open(self.progress_file, 'r')
             return json.loads(next(file))
         return None
 
     def save_pipeline_progress(self, file_path, index):
-        with open('reddit_pipeline_progress.txt', 'w') as file:
+        with open(self.progress_file, 'w') as file:
             progress: dict = {'file_path': file_path, 'index': index}
             file.write(json.dumps(progress))
 
