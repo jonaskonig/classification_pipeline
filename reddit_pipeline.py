@@ -2,6 +2,7 @@ import os
 from typing import List
 import json
 import logging
+import datetime
 
 from detect_pipeline import DetectPipeline
 from helper import get_line_count
@@ -21,7 +22,7 @@ class RedditPipeline:
         current_progress = self.load_pipeline_progress()
         if current_progress != None:
             last_file = current_progress['file_path']
-            file_paths = file_paths[file_paths.index(last_file) + 1:]
+            file_paths = file_paths[file_paths.index(last_file):]
             logging.info('Reinitialized after progress: ' + str(last_file))
             start_index = current_progress['index']
         else:
@@ -58,7 +59,16 @@ class RedditPipeline:
             file.write(json.dumps(progress))
 
     def extract_meta(self, reddit_post) -> dict:
-        """TODO"""
-        return reddit_post
-
-
+        timestamp = datetime.datetime.fromtimestamp(reddit_post['created_utc'])
+        return {
+            'meta': {
+                'timestamp': timestamp,
+                'identifier': {
+                    'permalink': reddit_post['permalink'],
+                    'link_id': reddit_post['link_id'],
+                    'parent_id': reddit_post['parent_id']
+                },
+                'subreddit': reddit_post['subreddit'],
+                'source': 'REDDIT'
+            }
+        }
