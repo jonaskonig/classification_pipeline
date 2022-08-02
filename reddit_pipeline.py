@@ -5,7 +5,7 @@ import logging
 import datetime
 
 from detect_pipeline import DetectPipeline
-from helper import get_line_count
+from helper import get_line_count, get_random_indices
 
 
 class RedditPipeline:
@@ -13,7 +13,9 @@ class RedditPipeline:
         self.id = id
         self.detect_pipeline = detect_pipeline
         self.progress_file = f'reddit_pipeline_progress_{self.id}.txt'
+        self.indices_file = f'reddit_pipeline_indices_{self.id}.txt'
         logging.basicConfig(filename=f'reddit_pipeline_{self.id}.log', filemode='a', format='%(asctime)s - %(message)s', level=logging.INFO)
+        self.posts_per_file = 10000
 
     def run(self, file_paths: List[str]):
         logging.info('Pipeline to run on the following files:\n' + str(file_paths) + '\n\n')
@@ -23,28 +25,43 @@ class RedditPipeline:
         if current_progress != None:
             last_file = current_progress['file_path']
             file_paths = file_paths[file_paths.index(last_file):]
-            logging.info('Reinitialized after progress: ' + str(last_file))
             start_index = current_progress['index']
+            logging.info(f'Reinitialized in file:\n{last_file}\nat index {start_index}')
+            random_indices = self.load_indices(last_file, start_index)
         else:
-            start_index = -1
+            random_indices = None
 
-
+        counter = 0
         for file_path in file_paths:
             line_count = get_line_count(file_path)
-            file = open(file_path, 'r')
             logging.info('\n\nProcessing new File:\n' + str(file_path) + '\nLines: ' + str(line_count) + '\n')
-            reddit_post = json.loads(next(file))
-            index = 0
-            while reddit_post != None:
-                if index > start_index:
-                    data = reddit_post["body"]
-                    meta = self.extract_meta(reddit_post)
-                    self.detect_pipeline.datata_classify(data, meta)
-                    reddit_post = json.loads(next(file))
-                    if index % 10000 == 0:
-                        logging.info('Processed ' + str(index / line_count) + '% ' + ' (' + str(index) + '/' + str(line_count) + ')')
-                self.save_pipeline_progress(file_path, index)
-                index += 1
+
+            if random_indices == None:
+                random_indices = get_random_indices(line_count, self.posts_per_file)
+                random_indices.sort()
+                self.save_indices(file_path, random_indices)
+
+            file = open(file_path, 'r')
+            line = file.readline()
+            current_index = 0
+
+            for random_index in random_indices:
+                while current_index < random_index:
+                    line = file.readline()
+                    current_index += 1
+
+                reddit_post = json.loads(line)
+                data = reddit_post["body"]
+                meta = self.extract_meta(reddit_post)
+
+                self.detect_pipeline.datata_classify(data, meta)
+                self.save_pipeline_progress(file_path, random_index)
+
+                counter += 1
+                if counter % 10000 == 0:
+                    logging.info('Processed ' + str(counter / line_count) + '% ' + ' (' + str(counter) + '/' + str(line_count) + ')')
+                
+            random_indices = None
         logging.info('Pipeline finished')
 
     def load_pipeline_progress(self):
@@ -56,6 +73,21 @@ class RedditPipeline:
     def save_pipeline_progress(self, file_path, index):
         with open(self.progress_file, 'w') as file:
             progress: dict = {'file_path': file_path, 'index': index}
+            file.write(json.dumps(progress))
+
+    def load_indices(self, file_path, start_index):
+        if os.path.exists(self.indices_file):
+            file = open(self.indices_file, 'r')
+            for line in file:
+                index_dict = json.loads(line)
+                if index_dict['file_path'] == file_path:
+                    indices = index_dict['indices']
+                    return indices[indices.index(start_index):]
+        return None
+
+    def save_indices(self, file_path, indices):
+        with open(self.indices_file, 'a') as file:
+            progress: dict = {'file_path': file_path, 'indices': indices}
             file.write(json.dumps(progress))
 
     def extract_meta(self, reddit_post) -> dict:

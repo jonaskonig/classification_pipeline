@@ -1,5 +1,7 @@
 import os
+import random
 from statistics import mean, median
+from typing import List
 
 def absoluteFilePaths(directory):
     for dirpath,_,filenames in os.walk(directory):
@@ -12,6 +14,9 @@ def get_line_count(file_path) -> int:
             for line in f:
                 line_count += 1
         return line_count
+
+def get_random_indices(line_count, number) -> List[str]:
+    return [random.randint(0, line_count - 1) for i in range(number)]
 
 def count_all_lines():
     directory = '/mnt/ceph/storage/data-tmp/teaching-current/jk76qufi/pushshift_reddit_dump'
