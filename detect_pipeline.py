@@ -1,3 +1,4 @@
+import os
 from transformers import pipeline
 import pymongo
 import langid
@@ -38,6 +39,9 @@ class DetectPipeline:
         self.min_topic_certainty = min_topic_certainty
         self.min_emotion_certainty = min_emotion_certainty
         self.stat_file = stat_file
+        self.stat_folder = 'stats'
+        if not os.path.exists(self.stat_folder):
+            os.mkdir(self.stat_folder)
 
     def classifysentence(self, sentence: str):
         svs = self.statementvssentence(sentence)
@@ -100,4 +104,4 @@ class DetectPipeline:
             file1.close()
 
     def rename_stat_file(self, id: str):
-        self.stat_file = f'stats_{id}.txt'
+        self.stat_file = os.path.join(self.stat_folder, f'{id}.txt')

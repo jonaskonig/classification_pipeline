@@ -11,11 +11,22 @@ from helper import get_line_count, get_random_indices
 class RedditPipeline:
     def __init__(self, id: str, detect_pipeline: DetectPipeline):
         self.id = id
+        if not os.path.exists(id):
+            os.mkdir(id)
+
         self.detect_pipeline = detect_pipeline
-        self.progress_file = f'reddit_pipeline_progress_{self.id}.txt'
-        self.indices_file = f'reddit_pipeline_indices_{self.id}.txt'
-        logging.basicConfig(filename=f'reddit_pipeline_{self.id}.log', filemode='a', format='%(asctime)s - %(message)s', level=logging.INFO)
+
         self.posts_per_file = 10000
+
+        self.progress_file = os.path.join(id, f'reddit_pipeline_progress.txt')
+        self.indices_file = os.path.join(id, f'reddit_pipeline_indices.txt')
+
+        logging.basicConfig(
+            filename=os.path.join(id, f'reddit_pipeline.log'),
+            filemode='a',
+            format='%(asctime)s - %(message)s',
+            level=logging.INFO)
+
 
     def run(self, file_paths: List[str]):
         logging.info('Pipeline to run on the following files:\n' + str(file_paths) + '\n\n')
@@ -66,16 +77,19 @@ class RedditPipeline:
             random_indices = None
         logging.info('Pipeline finished')
 
+
     def load_pipeline_progress(self):
         if os.path.exists(self.progress_file):
             file = open(self.progress_file, 'r')
             return json.loads(next(file))
         return None
 
+
     def save_pipeline_progress(self, file_path, index):
         with open(self.progress_file, 'w') as file:
             progress: dict = {'file_path': file_path, 'index': index}
             file.write(json.dumps(progress))
+
 
     def load_indices(self, file_path, start_index):
         if os.path.exists(self.indices_file):
@@ -87,10 +101,12 @@ class RedditPipeline:
                     return indices[indices.index(start_index):]
         return None
 
+
     def save_indices(self, file_path, indices):
         with open(self.indices_file, 'a') as file:
             progress: dict = {'file_path': file_path, 'indices': indices}
             file.write(json.dumps(progress))
+
 
     def extract_meta(self, reddit_post) -> dict:
         timestamp = datetime.datetime.fromtimestamp(reddit_post['created_utc'])
@@ -106,6 +122,7 @@ class RedditPipeline:
                 'source': 'REDDIT'
             }
         }
+
 
     def rename_stats_file(self, file_path: str):
         splitted = file_path.split('/')
