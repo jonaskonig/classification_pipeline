@@ -109,16 +109,20 @@ class RedditPipeline:
 
 
     def extract_meta(self, reddit_post) -> dict:
-        timestamp = datetime.datetime.fromtimestamp(reddit_post['created_utc'])
+        timestamp = datetime.datetime.fromtimestamp(int(reddit_post['created_utc'])) if 'created_utc' in reddit_post else None
+        permalink = reddit_post['permalink'] if 'permalink' in reddit_post else None
+        link_id = reddit_post['link_id'] if 'linkid' in reddit_post else None
+        parent_id = reddit_post['parent_id'] if 'parent_id' in reddit_post else None
+        subreddit = reddit_post['subreddit'] if 'subreddit' in reddit_post else None
         return {
             'meta': {
                 'timestamp': timestamp,
                 'identifier': {
-                    'permalink': reddit_post['permalink'],
-                    'link_id': reddit_post['link_id'],
-                    'parent_id': reddit_post['parent_id']
+                    'permalink': permalink,
+                    'link_id': link_id,
+                    'parent_id': parent_id
                 },
-                'subreddit': reddit_post['subreddit'],
+                'subreddit': subreddit,
                 'source': 'REDDIT'
             }
         }
