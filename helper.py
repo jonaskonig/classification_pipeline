@@ -16,7 +16,7 @@ def get_line_count(file_path) -> int:
         return line_count
 
 def get_random_indices(line_count, number) -> List[str]:
-    return [random.randint(0, line_count - 1) for i in range(number)]
+    return random.sample(range(line_count), number if number < line_count else line_count)
 
 def count_all_lines():
     directory = '/mnt/ceph/storage/data-tmp/teaching-current/jk76qufi/pushshift_reddit_dump'
