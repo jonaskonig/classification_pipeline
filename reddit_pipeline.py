@@ -1,3 +1,4 @@
+from cmath import log
 import os
 from typing import List
 import json
@@ -111,9 +112,12 @@ class RedditPipeline:
     def extract_meta(self, reddit_post) -> dict:
         timestamp = datetime.datetime.fromtimestamp(int(reddit_post['created_utc'])) if 'created_utc' in reddit_post else None
         permalink = reddit_post['permalink'] if 'permalink' in reddit_post else None
-        link_id = reddit_post['link_id'] if 'linkid' in reddit_post else None
+        link_id = reddit_post['link_id'] if 'link_id' in reddit_post else None
         parent_id = reddit_post['parent_id'] if 'parent_id' in reddit_post else None
         subreddit = reddit_post['subreddit'] if 'subreddit' in reddit_post else None
+        if (timestamp == None or permalink == None or link_id == None or parent_id == None or subreddit == None) {
+            logging.info(f'Meta data not complete for:\n{reddit_post}\n')
+        }
         return {
             'meta': {
                 'timestamp': timestamp,
