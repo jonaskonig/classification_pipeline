@@ -33,6 +33,8 @@ class RedditPipeline:
 
         counter = 0
         for file_path in file_paths:
+            self.rename_stats_file(file_path)
+
             line_count = get_line_count(file_path)
             logging.info('\n\nProcessing new File:\n' + str(file_path) + '\nLines: ' + str(line_count) + '\n')
 
@@ -104,3 +106,8 @@ class RedditPipeline:
                 'source': 'REDDIT'
             }
         }
+
+    def rename_stats_file(self, file_path: str):
+        splitted = file_path.split('/')
+        file_name = splitted[len(splitted) - 1]
+        self.detect_pipeline.rename_stat_file(file_name)

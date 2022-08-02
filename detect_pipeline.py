@@ -99,3 +99,5 @@ class DetectPipeline:
             file1.write(f"{len(sentences)},{len(statementlist)},{len(questlist)}\n")
             file1.close()
 
+    def rename_stat_file(self, id: str):
+        self.stat_file = f'stats_{id}.txt'
