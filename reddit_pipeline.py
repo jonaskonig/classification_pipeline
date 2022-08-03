@@ -95,7 +95,9 @@ class RedditPipeline:
     def load_indices(self, file_path, start_index):
         if os.path.exists(self.indices_file):
             file = open(self.indices_file, 'r')
-            for line in file:
+            truncated_lines = next(file)
+            lines = truncated_lines.replace('}{', '}---{').split('---')
+            for line in lines:
                 index_dict = json.loads(line)
                 if index_dict['file_path'] == file_path:
                     indices = index_dict['indices']
