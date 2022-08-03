@@ -14,7 +14,7 @@ def absoluteFilePaths(directory):
 def get_line_count(file_path: str) -> int:
     result = subprocess.run(['wc', '-l', file_path], stdout=subprocess.PIPE)
     result = str(result.stdout).split(" ")
-    return int(result[-2])+1
+    return int(result[-2][2:])+1
 
 
 def get_random_indices(line_count, number) -> List[str]:
