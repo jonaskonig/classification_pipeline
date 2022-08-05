@@ -64,16 +64,20 @@ class RedditPipeline:
                     line = file.readline()
                     current_index += 1
 
-                reddit_post = json.loads(line)
-                data = reddit_post["body"]
-                meta = self.extract_meta(reddit_post)
+                try:
+                    reddit_post = json.loads(line)
+                    data = reddit_post["body"]
+                    meta = self.extract_meta(reddit_post)
 
-                self.detect_pipeline.datata_classify(data, meta)
-                self.save_pipeline_progress(file_path, random_index)
+                    self.detect_pipeline.datata_classify(data, meta)
+                    self.save_pipeline_progress(file_path, random_index)
 
-                counter += 1
-                if counter % 10000 == 0:
-                    logging.info('Processed ' + str(counter / line_count) + '% ' + ' (' + str(counter) + '/' + str(line_count) + ')')
+                    counter += 1
+                    if counter % 10000 == 0:
+                        logging.info('Processed ' + str(counter / line_count) + '% ' + ' (' + str(counter) + '/' + str(line_count) + ')')
+                except ValueError as e:
+                    line_str = line if line else 'Line was empty'
+                    logging.error(f'Parsing reddit post failed.\nLine: {line_str}\nError: {e}')
                 
             random_indices = None
         logging.info('Pipeline finished')
