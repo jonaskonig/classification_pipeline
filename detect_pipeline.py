@@ -84,6 +84,27 @@ class DetectPipeline:
         if len(questionlist) > 0:
             self.ftr_q.insert_many(questionlist)
 
+    def data_list_classify(self, datalist):
+        fullquestlist = []
+        fullstatementlist = []
+        for data, meta in datalist:
+            sentences = self.split(data)
+            cleansentences = [x for x in sentences if 4 < self.findwhitespac(x) < 35]
+            questlist = []
+            statementlist = []
+            for sent in cleansentences:
+                q, out = self.classifysentence(sent)
+                if q == 0:
+                    statementlist.append(out)
+                if q == 1:
+                    questlist.append(out)
+            fullquestlist.append([x | meta for x in questlist])
+            fullstatementlist.append([x | meta for x in statementlist])
+            file1 = open(self.stat_file, "a")  # append mode
+            file1.write(f"{len(sentences)},{len(statementlist)},{len(questlist)}\n")
+            file1.close()
+        self.to_database(fullquestlist, fullstatementlist)
+
     def datata_classify(self, data, meta: dict):
         if self.detect_lang(data):
             sentences = self.split(data)
