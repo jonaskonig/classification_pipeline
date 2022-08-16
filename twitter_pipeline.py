@@ -42,7 +42,7 @@ class TwitterPipeline:
                 self.openfiles("download/", progess["file_name"])
                 progess = None
             else:
-                self.openfiles("download/", progess["file_name"])
+                self.openfiles("download/")
 
     def bar_progress(self, current, total, width=80):
         progress_message = "Downloading: %d%% [%d / %d] bytes" % (current / total * 100, current, total)
@@ -59,7 +59,7 @@ class TwitterPipeline:
     def get_important_data(self, raw_json: str | bytes):
         data = json.loads(raw_json)
         try:
-            print(data["text"])
+
             meta = {"meta": {"timestamp": datetime.strptime(data["created_at"], '%a %b %d %H:%M:%S %z %Y'),
                              "identifier": {"id": data["id"], "userID": data["user"]["id"],
                                             "username": data["user"]["screen_name"]}, "source": "TWITTER"}}
@@ -95,7 +95,7 @@ class TwitterPipeline:
                         collectiontext.append((text, meta))
                     if len(collectiontext) > 9:
                         self.detect_pipeline.data_list_classify(collectiontext)
-                        print(collectiontext)
+
                         collectiontext = []
             else:
                 linenumberlist = random.sample(range(0, len(lines)), perfile + takewith)
@@ -104,9 +104,9 @@ class TwitterPipeline:
                     text, meta = self.get_important_data(lines[linenumber])
                     if text:
                         collectiontext.append((text, meta))
-                    if len(collectiontext) > 9 or len(collectiontext) == len(linenumber):
+                    if len(collectiontext) > 9 or len(collectiontext) == len(linenumberlist):
                         self.detect_pipeline.data_list_classify(collectiontext)
-                        print(collectiontext)
+
                         collectiontext = []
         os.rename("stats.txt", f"{self.yearmount[0]}-{self.yearmount[1]}.txt")
 
@@ -122,5 +122,6 @@ class TwitterPipeline:
 
     def load_pipeline_progress(self) -> dict | None:
         if os.path.exists(self.progress_file):
-            return json.loads(self.progress_file)
+            file = open(self.progress_file)
+            return json.loads(file.read())
         return None

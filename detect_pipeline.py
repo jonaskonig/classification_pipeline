@@ -98,8 +98,8 @@ class DetectPipeline:
                     statementlist.append(out)
                 if q == 1:
                     questlist.append(out)
-            fullquestlist.append([x | meta for x in questlist])
-            fullstatementlist.append([x | meta for x in statementlist])
+            fullquestlist.extend([x | meta for x in questlist])
+            fullstatementlist.extend([x | meta for x in statementlist])
             file1 = open(self.stat_file, "a")  # append mode
             file1.write(f"{len(sentences)},{len(statementlist)},{len(questlist)}\n")
             file1.close()
