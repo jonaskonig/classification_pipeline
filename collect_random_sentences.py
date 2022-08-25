@@ -2,16 +2,21 @@ from random import sample
 from math import floor
 import os
 import json
+import re
 
 from helper import absoluteFilePaths, get_line_count, get_random_indices
 
+split_pattern = '(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?)\s'
+rereplace = [r"\n", r"\r", r"RT", r"(https?.\S+)", r"\<(.*?)\>", '[^\x00-\x7F]']
+regex = re.compile('|'.join(rereplace))
+
 def split_sentences(text) -> list:
-    split = re.split(self.split_pattern, text)
-    split = [re.sub(self.regex, "", s) for s in split]
+    split = re.split(split_pattern, text)
+    split = [re.sub(regex, "", s) for s in split]
     split = [ re.sub(r"\s+", ' ', s) for s in split]
     return split
 
-def find_whitespaces(sef, text) -> int:
+def find_whitespaces(text) -> int:
     return len(re.findall(r'\w+', text))
 
 sentences_file = open(os.path.join('random_sentences.txt'), 'a+')
