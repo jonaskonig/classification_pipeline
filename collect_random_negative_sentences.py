@@ -37,14 +37,14 @@ file_paths = list(absoluteFilePaths(directory))
 
 random_file = sample(file_paths, 1)
 
-n_posts = 100
+n_sentences = 100
 
 file = open(random_file[0], 'r')
 line = file.readline()
 index = 0
 
 not_future_statements = []
-while index < n_posts:
+while index < n_sentences:
     try:
         line = file.readline()
         reddit_post = json.loads(line)
@@ -57,7 +57,11 @@ while index < n_posts:
             if future_bert(sentence)[0]["label"] == "LABEL_0" and statement_question_bert(sentence)[0]["label"] == "LABEL_0" and sentence not in not_future_statements:
                 not_future_statements.append(sentence)
                 index += 1
+
                 print(str(index) + ' Appended: ' + sentence)
+
+                if not index < n_sentences:
+                    break
             else:
                 print('Not appended: ' + sentence)
 
