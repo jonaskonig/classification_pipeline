@@ -4,7 +4,7 @@ import os
 
 from helper import absoluteFilePaths, get_line_count, get_random_indices
 
-sentences_file = open('random_sentences.txt')
+sentences_file = open(os.path.join('random_sentences.txt'))
 
 directory = '/mnt/ceph/storage/data-tmp/teaching-current/jk76qufi/pushshift_reddit_dump'
 file_paths = list(absoluteFilePaths(directory))
