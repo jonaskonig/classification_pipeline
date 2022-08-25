@@ -5,6 +5,15 @@ import json
 
 from helper import absoluteFilePaths, get_line_count, get_random_indices
 
+def split_sentences(text) -> list:
+    split = re.split(self.split_pattern, text)
+    split = [re.sub(self.regex, "", s) for s in split]
+    split = [ re.sub(r"\s+", ' ', s) for s in split]
+    return split
+
+def find_whitespaces(sef, text) -> int:
+    return len(re.findall(r'\w+', text))
+
 sentences_file = open(os.path.join('random_sentences.txt'), 'a+')
 
 directory = '/mnt/ceph/storage/data-tmp/teaching-current/jk76qufi/pushshift_reddit_dump'
@@ -35,19 +44,9 @@ for file_path in file_paths:
 
             sentences = split_sentences(data)
             cleaned_sentences = [x for x in sentences if 4 < find_whitespaces(x) < 35]
-            
+
             sentences_file.writelines("%s\n" % i for i in cleaned_sentences)
 
         except ValueError as e:
             line_str = line if line else 'Line was empty'
             print(f'Parsing reddit post failed.\nLine: {line_str}\nError: {e}')
-        
-
-def split_sentences(text) -> list:
-    split = re.split(self.split_pattern, text)
-    split = [re.sub(self.regex, "", s) for s in split]
-    split = [ re.sub(r"\s+", ' ', s) for s in split]
-    return split
-
-def find_whitespaces(sef, text) -> int:
-    return len(re.findall(r'\w+', text))
