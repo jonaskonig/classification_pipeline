@@ -1,10 +1,11 @@
 from random import sample
 from math import floor
 import os
+import json
 
 from helper import absoluteFilePaths, get_line_count, get_random_indices
 
-sentences_file = open(os.path.join('random_sentences.txt'))
+sentences_file = open(os.path.join('random_sentences.txt'), 'a+')
 
 directory = '/mnt/ceph/storage/data-tmp/teaching-current/jk76qufi/pushshift_reddit_dump'
 file_paths = list(absoluteFilePaths(directory))
@@ -15,7 +16,7 @@ random_files = sample(file_paths, n_files)
 n_posts = 100
 posts_per_file = floor(n_posts / n_files)
 
-for file in files:
+for file_path in file_paths:
     line_count = get_line_count(file_path)
     random_indices = get_random_indices(line_count, posts_per_file)
 
