@@ -51,9 +51,12 @@ while index < n_posts:
 
         sentences = split_sentences(data)
         cleaned_sentences = [x for x in sentences if 4 < find_whitespaces(x) < 35]
+        not_future_statements = []
         for sentence in cleaned_sentences:
-            if future_bert(sentence)[0]["label"] == "LABEL_0" and statement_question_bert(sentence)[0]["label"] == "LABEL_0":
-                sentences_file.write('\n' + sentence)
+            if future_bert(sentence)[0]["label"] == "LABEL_0" and statement_question_bert(sentence)[0]["label"] == "LABEL_0" and sentence not in not_future_statements:
+                not_future_statements.append(sentence)
+                index += 1
+        sentences_file.writelines(i + '\n' for i in not_future_statements)
     except ValueError as e:
         line_str = line if line else 'Line was empty'
         print(f'Parsing reddit post failed.\nLine: {line_str}\nError: {e}')
