@@ -8,14 +8,14 @@ import multiprocessing
 from datetime import datetime
 import wget
 import bz2
-
+import zipfile
 from detect_pipeline import DetectPipeline
 
-
+FILEDIR = "/classification_pipeline/newdie/archiveteam-json-twitterstream/"
 class TwitterPipeline:
-    def __init__(self, id: str, detect_pipeline: DetectPipeline, post_per_month: int, month_year_ist):
+    def __init__(self, id: str, detect_pipeline: DetectPipeline, post_per_month: int, Dirlist):
         self.id = id
-        self.month_year_ist = month_year_ist
+        self.Dirlist = Dirlist
         if not os.path.exists(self.id):
             os.mkdir(self.id)
         self.detect_pipeline = detect_pipeline
@@ -28,21 +28,22 @@ class TwitterPipeline:
             format='%(asctime)s - %(message)s',
             level=logging.INFO)
         progess = self.load_pipeline_progress()
+
         if progess:
-            index = self.month_year_ist.index(progess["year"], progess["month"])
-            self.month_year_ist = self.month_year_ist[index + 1:]
-        start = self.month_year_ist.pop(0)
-        self.yearmount = start
-        if os.path.isfile(f"used/{start[0]}-{start[1]}.tar"):
-            os.rename(f"used/{start[0]}-{start[1]}.tar", os.path.join("download/", f"{start[0]}-{start[1]}.tar"))
-        if not os.path.isfile(f"download/{start[0]}-{start[1]}.tar"):
-            self.getfile(start[0], start[1], f"download/{start[0]}-{start[1]}.tar")
-        while len(self.month_year_ist) > 0:
+            start = Dirlist.index(progess["tardir"])
+            Dirlist  = Dirlist[start+1:]
+        for dir in Dirlist:
+            filenemaes = [x for x in os.listdir(dir) if x.endswith(".zip") or x.endswith(".tar")]
             if progess:
-                self.openfiles("download/", progess["file_name"])
+                start = filenemaes.index(progess["tarfilename"])
+                filenemaes = filenemaes[start :]
                 progess = None
-            else:
-                self.openfiles("download/")
+            for f in filenemaes:
+                if progess:
+                    self.openfiles(dir, f, progess["file_name"])
+                else:
+                    self.openfiles(dir, f)
+
 
     def bar_progress(self, current, total, width=80):
         progress_message = "Downloading: %d%% [%d / %d] bytes" % (current / total * 100, current, total)
@@ -57,9 +58,9 @@ class TwitterPipeline:
         wget.download(url, filename, bar=self.bar_progress)
 
     def get_important_data(self, raw_json: str | bytes):
-        data = json.loads(raw_json)
-        try:
 
+        try:
+            data = json.loads(raw_json)
             meta = {"meta": {"timestamp": datetime.strptime(data["created_at"], '%a %b %d %H:%M:%S %z %Y'),
                              "identifier": {"id": data["id"], "userID": data["user"]["id"],
                                             "username": data["user"]["screen_name"]}, "source": "TWITTER"}}
@@ -67,25 +68,45 @@ class TwitterPipeline:
         except Exception as e:
             return None, None
 
-    def openfiles(self, filedir, startfile=None):
-        filename = f"{self.yearmount[0]}-{self.yearmount[1]}.tar"
-        os.rename(os.path.join(filedir, filename), os.path.join("used", f"{self.yearmount[0]}-{self.yearmount[1]}.tar"))
-        next = self.month_year_ist.pop(0)
-        p1 = multiprocessing.Process(target=self.getfile, args=(next[0], next[1], f"download/{next[0]}-{next[1]}.tar",))
-        p1.start()
-        tar = tarfile.open(os.path.join("used", filename))
-        filenames = tar.getnames()
+    def openfiles(self,dir, filename, startfile=None):
+        #filename = f"{self.yearmount[0]}-{self.yearmount[1]}.tar"
+        #os.rename(os.path.join(filedir, filename), os.path.join("used", f"{self.yearmount[0]}-{self.yearmount[1]}.tar"))
+        #next = self.month_year_ist.pop(0)
+        #p1 = multiprocessing.Process(target=self.getfile, args=(next[0], next[1], f"download/{next[0]}-{next[1]}.tar",))
+        #p1.start()v
+
+        if filename.endswith(".zip"):
+            tar = zipfile.ZipFile(os.path.join(dir, filename))
+            filenames = tar.namelist()
+        elif filename.endswith(".tar"):
+            tar = tarfile.open(os.path.join(dir,filename))
+            filenames = tar.getnames()
+        else:
+            return None
         filenames = [x for x in filenames if x.endswith(".json.bz2")]
+        if len(filenames) < 1:
+            return None
         perfile = int(self.post_per_month / len(filenames))
+        perfile = perfile if perfile > 0 else 1
         print(f"per file: {perfile}")
         takewith = 0
         if startfile:
             index = filenames.index(startfile)
             filenames = filenames[index + 2:]
         for f in filenames:
-            self.save_pipeline_progress(f,self.yearmount[0], self.yearmount[1])
-            thisjson = bz2.open(tar.extractfile(f))
+            self.save_pipeline_progress(f,filename, dir)
+            try:
+                if filename.endswith(".zip"):
+                    thisjson = bz2.open(tar.open(f))
+                elif filename.endswith(".tar"):
+                    thisjson = bz2.open(tar.extractfile(f))
+                else:
+                    continue
+            except:
+                continue
             lines = thisjson.readlines()
+            if len(lines)<1:
+                continue
             collectiontext = []
             if len(lines) + takewith < perfile:
                 takewith += perfile - len(lines)
@@ -106,18 +127,15 @@ class TwitterPipeline:
                         collectiontext.append((text, meta))
                     if len(collectiontext) > 9 or len(collectiontext) == len(linenumberlist):
                         self.detect_pipeline.data_list_classify(collectiontext)
-
                         collectiontext = []
-        os.rename("stats.txt", f"{self.yearmount[0]}-{self.yearmount[1]}.txt")
+        os.rename("stats.txt", filename)
 
-        self.yearmount = next
 
-        os.remove(os.path.join("used", filename))
-        p1.join()
 
-    def save_pipeline_progress(self, file_name, year, month):
+
+    def save_pipeline_progress(self, file_name, tarfile, tardir):
         with open(self.progress_file, 'w') as file:
-            progress: dict = {'file_name': file_name, 'year': year, 'month': month}
+            progress: dict = {'file_name': file_name, "tarfilename":tarfile, "tardir": tardir}
             file.write(json.dumps(progress))
 
     def load_pipeline_progress(self) -> dict | None:
